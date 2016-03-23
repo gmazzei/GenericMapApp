@@ -58,6 +58,7 @@ public class MapActivity extends AppCompatActivity
     private StoreService storeService;
     private ArrayList<StoreType> storeTypes;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -190,7 +191,7 @@ public class MapActivity extends AppCompatActivity
     private void setMarkers(List<Store> stores) {
 
         Map<Integer,Float> colorMap = new HashMap<Integer,Float>();
-        colorMap.put(0, BitmapDescriptorFactory.HUE_AZURE);
+        colorMap.put(0, BitmapDescriptorFactory.HUE_RED);
         colorMap.put(1, BitmapDescriptorFactory.HUE_GREEN);
         colorMap.put(2, BitmapDescriptorFactory.HUE_YELLOW);
 
@@ -198,6 +199,7 @@ public class MapActivity extends AppCompatActivity
             MarkerOptions options = new MarkerOptions();
             options.position(new LatLng(store.getLatitude(), store.getLongitude()));
             options.title(store.getName());
+            options.snippet(store.getType().getName());
             options.icon(BitmapDescriptorFactory.defaultMarker(colorMap.get(store.getType().getId())));
             mMap.addMarker(options);
         }
