@@ -28,10 +28,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         moveToMapIfLoggedIn();
 
-        LoginButton loginButton = (LoginButton)findViewById(R.id.login_button);
+        final LoginButton loginButton = (LoginButton)findViewById(R.id.login_button);
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
+                loginButton.setEnabled(false);
                 MainActivity.this.openMap();
             }
 

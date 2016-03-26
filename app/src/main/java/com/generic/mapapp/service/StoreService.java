@@ -1,11 +1,8 @@
 package com.generic.mapapp.service;
 
 
-import android.content.Context;
-import android.os.AsyncTask;
-import android.util.Log;
-
-import com.generic.mapapp.MapsApplication;
+import com.generic.mapapp.R;
+import com.generic.mapapp.intefaces.Closure;
 import com.generic.mapapp.domain.Store;
 import com.generic.mapapp.domain.StoreType;
 import com.google.gson.Gson;
@@ -14,28 +11,30 @@ import com.google.gson.reflect.TypeToken;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
 public class StoreService {
+
+    private static final StoreService INSTANCE = new StoreService();
+
+    public static StoreService get() {
+        return INSTANCE;
+    }
+
+    private StoreService() {
+        cacheService = CacheService.get();
+        restTemplate = new RestTemplate();
+        restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
+        gson = new Gson();
+    }
 
 
     private CacheService cacheService;
     private RestTemplate restTemplate;
     private Gson gson;
 
-    public StoreService() {
-        cacheService = CacheService.get();
-        restTemplate = new RestTemplate();
-        restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
-        gson = new Gson();
-    }
 
     public List<Store> getStores() {
         String json = get("http://private-32930-storesapi.apiary-mock.com/stores", "stores");
@@ -75,39 +74,21 @@ public class StoreService {
 
 
 
-
     private String get(final String url, final String key) {
 
-        AsyncTask task = new AsyncTask<Object, Object, String>() {
+        Closure apiCall = new Closure() {
 
             @Override
-            protected String doInBackground(Object... params) {
-                try {
-                    String json = restTemplate.getForObject(url, String.class);
-                    cacheService.put(key, json);
-                    return json;
-
-                } catch (Exception ex) {
-                    Log.i(this.getClass().getName(), "GET failed.");
-                    ex.printStackTrace();
-                    String json = cacheService.get(key);
-                    return json;
-                }
-
+            public Object call() {
+                String json = restTemplate.getForObject(url, String.class);
+                return json;
             }
+
         };
 
-        try {
-            task = task.execute();
-            Object result = task.get();
-            return (String) result;
-        } catch (Exception ex) {
-            Log.i(this.getClass().getName(), "GET failed");
-            ex.printStackTrace();
-        }
+        String json = cacheService.get(key, apiCall);
+        return json;
 
-        return null;
-        
     }
 
 }

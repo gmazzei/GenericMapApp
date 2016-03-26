@@ -5,7 +5,8 @@
     <item
         android:id="@+id/filter_settings"
         android:icon="@drawable/mr_ic_settings_light"
-        android:title="@string/filter_settings"
-        app:showAsAction="always"/>
+        android:title="@string/activity_map_menu_text"
+        app:showAsAction="always">
+    </item>
 
 </menu>

@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/filter_settings_text"
+        android:text="@string/activity_filter_settings_text"
         android:layout_marginTop="15dp"
         android:layout_marginBottom="15dp"
         android:textColor="#ffffff" />
@@ -23,37 +23,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-        <!--
-        <CheckBox
-            android:id="@+id/retailerCheckbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:layout_marginTop="15dp"
-            android:layout_marginBottom="15dp"
-            android:textColor="#ffffff"
-            android:text="Retailers" />
-
-        <CheckBox
-            android:id="@+id/massStorageCheckbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:layout_marginTop="15dp"
-            android:layout_marginBottom="15dp"
-            android:textColor="#ffffff"
-            android:text="Mass storage" />
-
-        <CheckBox
-            android:id="@+id/otherCheckbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:layout_marginTop="15dp"
-            android:layout_marginBottom="15dp"
-            android:textColor="#ffffff"
-            android:text="Others" />
-        -->
     </LinearLayout>
 
 
@@ -72,14 +41,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Ok"
+            android:text="@string/activity_filter_settings_ok_button"
             android:onClick="sendOk"/>
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Cancel"
+            android:text="@string/activity_filter_settings_cancel_button"
             android:onClick="sendCancel"/>
 
     </LinearLayout>

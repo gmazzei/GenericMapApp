@@ -14,7 +14,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -23,6 +22,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -34,9 +34,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,38 +48,70 @@ public class MapActivity extends AppCompatActivity
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
-    protected static final String TAG = "MapActivity";
+    private static final int OK = 1;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-
     private boolean mPermissionDenied = false;
-    private GoogleMap mMap;
+
+    public GoogleMap mMap;
     protected GoogleApiClient mGoogleApiClient;
-    private StoreService storeService;
-    private ArrayList<StoreType> storeTypes;
+
+    protected ArrayList<StoreType> storeTypes;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-        storeService = new StoreService();
-        storeTypes = (ArrayList<StoreType>) storeService.getStoreTypes();
+
+
+        AsyncTask task = new AsyncTask<Object, Void, Object>() {
+
+            @Override
+            protected Object doInBackground(Object... params) {
+                storeTypes = (ArrayList<StoreType>) StoreService.get().getStoreTypes();
+                return null;
+            }
+        };
+
+        task.execute();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //Creating map
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+
         buildGoogleApiClient();
+    }
+
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
     }
 
     @Override
     public void onMapReady(GoogleMap map) {
         mMap = map;
 
-        List<Store> stores = storeService.getStores();
-        setMarkers(stores);
+
+        AsyncTask task = new AsyncTask<Object, Object, List<Store>>() {
+
+            @Override
+            protected List<Store> doInBackground(Object... params) {
+                return StoreService.get().getStores();
+            }
+
+            @Override
+            protected void onPostExecute(List<Store> stores) {
+                setMarkers(mMap, stores);
+            }
+        };
+        task.execute();
 
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
@@ -135,13 +166,7 @@ public class MapActivity extends AppCompatActivity
     }
 
 
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
+
 
     @Override
     protected void onStart() {
@@ -178,17 +203,17 @@ public class MapActivity extends AppCompatActivity
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
-        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + result.getErrorCode());
+        Log.i(getClass().getName(), "Connection failed: ConnectionResult.getErrorCode() = " + result.getErrorCode());
     }
 
 
     @Override
     public void onConnectionSuspended(int cause) {
-        Log.i(TAG, "Connection suspended");
+        Log.i(getClass().getName(), "Connection suspended");
         mGoogleApiClient.connect();
     }
 
-    private void setMarkers(List<Store> stores) {
+    public void setMarkers(GoogleMap map, List<Store> stores) {
 
         Map<Integer,Float> colorMap = new HashMap<Integer,Float>();
         colorMap.put(0, BitmapDescriptorFactory.HUE_RED);
@@ -201,7 +226,7 @@ public class MapActivity extends AppCompatActivity
             options.title(store.getName());
             options.snippet(store.getType().getName());
             options.icon(BitmapDescriptorFactory.defaultMarker(colorMap.get(store.getType().getId())));
-            mMap.addMarker(options);
+            map.addMarker(options);
         }
     }
 
@@ -217,7 +242,7 @@ public class MapActivity extends AppCompatActivity
             case R.id.filter_settings:
                 Intent intent = new Intent(this, MapSettingsActivity.class);
                 intent.putExtra("criteria", storeTypes);
-                startActivityForResult(intent, 1);
+                startActivityForResult(intent, OK);
                 return true;
 
             default:
@@ -230,14 +255,31 @@ public class MapActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == 1 && resultCode == 1 && data.hasExtra("criteria")) {
-            ArrayList<StoreType> criteria = (ArrayList<StoreType>)data.getSerializableExtra("criteria");
+        if (requestCode == OK && resultCode == OK && data.hasExtra("criteria")) {
+
+            storeTypes = (ArrayList<StoreType>)data.getSerializableExtra("criteria");
             mMap.clear();
-            storeTypes = criteria;
-            List<Store> stores = storeService.getStores(criteria);
-            setMarkers(stores);
+
+            AsyncTask task = new AsyncTask<Object, Object, List<Store>>() {
+
+                @Override
+                protected List<Store> doInBackground(Object... params) {
+                    List<Store> stores = StoreService.get().getStores(storeTypes);
+                    return stores;
+                }
+
+                @Override
+                protected void onPostExecute(List<Store> stores) {
+                    setMarkers(mMap, stores);
+                }
+            };
+
+            task.execute();
         }
 
     }
 
+
 }
+
+
